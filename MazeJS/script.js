@@ -126,10 +126,10 @@
         true, true, true, true, true, true, true, true, true, true, true, true, true, true, true
     ];
 
-    var LEFT = 37,
-        UP = 38,
-        RIGHT = 39,
-        DOWN = 40;
+    var LEFT = 65,
+        UP = 87,
+        RIGHT = 68,
+        DOWN = 83;
     var mvLeft = mvRight = mvDown = mvUp = false;
     var startButton = false,
         finishButton = false,

@@ -1,0 +1,431 @@
+<!doctype html> 
+<html lang="en"> 
+<head> 
+    <meta charset="UTF-8" />
+    <title>bedwolf odyssey</title>
+    <script src="//cdn.jsdelivr.net/npm/phaser@3.11.0/dist/phaser.js"></script>
+    <style type="text/css">
+        body {
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+
+<script type="text/javascript">
+
+var config = {
+    type: Phaser.AUTO,
+    width: 5112,
+    height: 600,
+    physics: {
+        default: 'arcade',
+        arcade: {
+            gravity: { y: 500 },
+            debug: false
+        }
+    },
+    scene: {
+        preload: preload,
+        create: create,
+        update: update
+    }
+};
+
+var player;
+var player2;
+var getitem, musicgame;
+var platforms;
+var ramps;
+var cursors;
+var score = 0;
+var gameOver = false;
+var scoreText, score = 0;
+var lifeText, lifeScore = 0;
+var movingPlatform1, movingPlatform2;
+var tree1;
+var door;
+var coin;
+var life;
+var enemy, enemy1, enemy2, enemy3, enemy4;
+var key;
+var log = 1;
+var getLife = false;
+var startGame = false;
+var game = new Phaser.Game(config);
+
+function preload (){
+    this.load.image('sky', 'assets/bg.png'); 
+    this.load.image('bomb', 'assets/bomb.png');
+    this.load.spritesheet('dude', 'assets/playerkat.png', { frameWidth: 64, frameHeight: 56 });
+    this.load.image('floor', 'assets/04.png');
+    this.load.image('rampRight', 'assets/13.png');
+    this.load.image('rampLeft', 'assets/14.png');
+    this.load.image('water', 'assets/12.png');
+    this.load.image('ground', 'assets/01.png');
+    this.load.image('bound', 'assets/03.png');
+    this.load.image('ramp', 'assets/02.png');
+    this.load.image('platform', 'assets/11.png');
+    this.load.image('tree2', 'assets/arvore2.png');
+    this.load.image('tree1', 'assets/arvore.png');
+    this.load.image('bush1', 'assets/bush1.png');
+    this.load.image('bush2', 'assets/bush2.png');
+    this.load.image('scarecrow', 'assets/scarecrow.png');
+    this.load.image('door', 'assets/door.png');
+    this.load.image('box', 'assets/box2.png');
+    this.load.image('coin', 'assets/coins.png');
+    this.load.image('life', 'assets/heart.png');
+    this.load.image('key', 'assets/key.png');
+    this.load.audio('getitem', 'assets/getitem.ogg');
+    this.load.audio('musicgame', 'assets/music.ogg');
+    this.load.spritesheet('enemy', 'assets/monstreco.png', {frameWidth: 50, frameHeight: 40});
+}
+var flyingBomb = new Phaser.Class({
+    Extends: Phaser.Physics.Arcade.Sprite,
+    initialize: 
+    function flyingBomb(scene, x, y, width, height, speed){
+        Phaser.Physics.Arcade.Sprite.call(this, scene, x, y, 'bomb');
+        this.path = new Phaser.Curves.Ellipse(x, y, width, height);
+        this.pathIndex = 0;
+        this.pathSpeed = speed;
+        this.pathVector = new Phaser.Math.Vector2();
+        this.path.getPoint(0, this.pathVector);
+        this.setPosition(this.pathVector.x, this.pathVector.y);
+    },
+    preUpdate: function(time, delta){
+        this.anims.update(time, delta);
+        this.path.getPoint(this.pathIndex, this.pathVector);
+        this.setPosition(this.pathVector.x, this.pathVector.y);
+        this.pathIndex = Phaser.Math.Wrap(this.pathIndex + this.pathSpeed, 0, 1);
+    }
+});
+function create (){
+    
+    getitem = this.sound.add('getitem');
+    musicgame = this.sound.add('musicgame');
+    musicgame.loop = true;
+    musicgame.play();
+    this.add.image(0, 0, 'sky').setOrigin(0);
+    platforms = this.physics.add.staticGroup();
+    tree1 = this.physics.add.staticGroup();
+    tree1.create(130, 490, 'tree2');
+    tree1.create(100, 490, 'tree1');
+    tree1.create(340, 490, 'tree2');
+    tree1.create(200, 510, 'bush1');
+    tree1.create(1090, 430, 'tree1');
+    tree1.create(1200, 510, 'bush1');
+    tree1.create(1600, 490, 'tree2');
+    tree1.create(1700, 490, 'tree1');
+    tree1.create(2200, 490, 'tree2');
+    tree1.create(2250, 510, 'bush1');
+    tree1.create(2500, 490, 'tree1');
+    tree1.create(3000, 490, 'tree2');
+    tree1.create(3064, 490, 'tree1');
+    tree1.create(3900, 510, 'bush1');
+    tree1.create(1000, 400, 'scarecrow');
+    platforms.create(1300, 504, 'box');
+    movingPlatform1 = this.physics.add.image(400, 400, 'platform');
+    movingPlatform1.setImmovable(true);
+    movingPlatform1.body.allowGravity = false;
+    movingPlatform1.setVelocityX(50);
+    movingPlatform2 = this.physics.add.image(4000, 400, 'platform');
+    movingPlatform2.setImmovable(true);
+    movingPlatform2.body.allowGravity = false;
+    movingPlatform2.setVelocityX(100);
+    ramps = this.physics.add.staticGroup();
+    door = this.physics.add.staticGroup();
+    door.create(5000, 490, 'door');
+    var bomb = this.physics.add.group({allowGravity: false});
+
+    key = this.physics.add.group({
+        key: 'key',
+        repeat: 0,
+        setXY:{x:4900, y: 0},
+    });
+    
+    //esse for eh uma nojeira me desculpem
+    for(var x = 32; x<5112; x+=64){
+        if(x===672){
+            ramps.create(x, 568, 'rampRight');
+            ramps.create(x+64, 568, 'water');
+            ramps.create(x+64+64, 568, 'rampLeft');
+            x += 64+64+64;
+            var aux = 0;
+            for(var y = x; y<=(x+64*4); y+=64){
+                platforms.create(y, 568, 'ground');
+                if(!aux){
+                    platforms.create(y, 504, 'bound');
+                    aux = 1;
+                }else if(y==x+64*4){
+                    platforms.create(y, 504, 'ramp');
+                }
+                else platforms.create(y, 504, 'floor'); 
+            }
+            x += 64*4;                   
+        }else if(x===4000){
+            ramps.create(x, 568, 'rampRight');
+            for(var y = 4064; y<=4064+10*64; y+=64){
+                ramps.create(y, 568, 'water');
+            }
+            x = y;
+            ramps.create(x, 568, 'rampLeft');
+        }
+        else platforms.create(x, 568, 'floor');
+    }
+
+
+    platforms.create(672, 300, 'platform');
+    platforms.create(608, 300, 'platform');
+    platforms.create(542, 400, 'platform');
+
+
+    for(var x = 100; x<=100+4*64; x+=64){
+        platforms.create(x, 150, 'platform');
+    }
+    for(var x = 1200; x<=1200+3*64; x+=64){
+        platforms.create(x, 250, 'platform');
+    }
+    for(var x = 1400; x<=1400+2*64; x+=64){
+        platforms.create(x, 150, 'platform');
+    }
+    platforms.create(1600, 350, 'platform');
+
+    for(var x = 2000; x<=2000+5*64; x+=64){
+        platforms.create(x, 200, 'platform');
+    }
+    for(var x = 2300; x<2300+3*64; x+=64){
+        platforms.create(x, 370, 'platform');
+    }
+
+
+    platforms.create(3000, 400, 'platform');
+    platforms.create(3150, 250, 'platform');
+
+
+    for(var x = 3300; x<=3300+6*64; x+=64){
+        platforms.create(x, 150, 'platform');
+    }
+   //platforms.create(4000, 400, 'platform');
+
+    this.cameras.main.setSize(window.innerWidth, 600);
+    this.cameras.main.setBounds(0, 0, 5112, 600);
+    this.physics.world.setBounds(0, 0, 5112, 600);
+
+    player = this.physics.add.sprite(50, 450, 'dude');
+    player.setBounce(0.2);
+    player.setCollideWorldBounds(true);
+    
+    this.anims.create({
+        key: 'left',
+        frames: this.anims.generateFrameNumbers('dude', { start: 8, end: 13}),
+        frameRate: 7,
+        repeat: -1
+    });
+    this.anims.create({
+        key: 'turn',
+        frames: [ { key: 'dude', frame: 0 } ],
+        frameRate: 10
+    });
+    this.anims.create({
+        key: 'turnL',
+        frames: [ { key: 'dude', frame: 14 } ],
+        frameRate: 10
+    });
+    this.anims.create({
+        key: 'right',
+        frames: this.anims.generateFrameNumbers('dude', { start: 2, end: 7 }),
+        frameRate: 7,
+        repeat: -1
+    });
+    
+    this.anims.create({
+        key: 'enemyRight',
+        frames: this.anims.generateFrameNumbers('enemy', {start: 0, end: 4}),
+        frameRate: 10,
+        repeat: -1
+    });
+    this.anims.create({
+        key: 'enemyLeft',
+        frames: this.anims.generateFrameNumbers('enemy', {start: 5, end: 9}),
+        frameRate: 10,
+        repeat: -1
+    });
+    enemy = this.physics.add.sprite(100, 500, 'enemy');
+    enemy.setVelocityX(100);
+    enemy1 = this.physics.add.sprite(850, 450, 'enemy');
+    enemy1.setVelocityX(100);
+    enemy2 = this.physics.add.sprite(1400, 450, 'enemy');
+    enemy2.setVelocityX(10);
+
+    enemy3 = this.physics.add.sprite(2500, 450, 'enemy');
+    enemy3.setVelocityX(100);
+    enemy4 = this.physics.add.sprite(1400, 450, 'enemy');
+    enemy4.setVelocityX(100);
+    enemy5 = this.physics.add.sprite(3000, 450, 'enemy');
+    enemy5.setVelocityX(100);
+
+     //x, y eh o centro do caminho
+    //width e height eh o tamaho da elipse
+    //speed eh o speed
+    bomb.add(new flyingBomb(this, 400, 200, 200, 200, 0.005), true);
+    bomb.add(new flyingBomb(this, 1500, 200, 200, 200, -0.003), true);
+    bomb.add(new flyingBomb(this, 1500, 200, 300, 300, 0.003), true);
+    bomb.add(new flyingBomb(this, 2500, 200, 300, 300, 0.003), true);
+    bomb.add(new flyingBomb(this, 3200, 200, 300, 300, -0.003), true);
+    bomb.add(new flyingBomb(this, 3500, 200, 300, 300, 0.005), true);
+    bomb.add(new flyingBomb(this, 4500, 200, 300, 300, -0.003), true);
+
+
+    this.cameras.main.startFollow(player, true, 0.05, 0.05);
+    life = this.physics.add.group({
+        key: 'life',
+        repeat: 0,
+        setXY:{ x:540, y:0}
+    });
+
+    coin = this.physics.add.group({
+        key: 'coin',
+        repeat: 8,
+        setXY:{x:100, y: 0, stepX: 32},
+    });
+    for(var x = 590; x<=600+3*32; x+=32){
+        coin.create(x, 0, 'coin');
+    }
+    for(var x = 1182; x<=1182+11*32; x+=32){
+        coin.create(x, 0, 'coin');
+    }
+    for(var x = 2000; x<=2000+10*32; x+=32){
+        coin.create(x, 0, 'coin');
+    }
+    for(var x = 2280; x<=2280+5*32; x+=32){
+        coin.create(x, 200, 'coin');
+    }
+    for(var x = 3300; x<=3300+12*32; x+=32){
+        coin.create(x,0, 'coin');
+    }
+    coin.children.iterate(function(child){
+        child.setBounceY(Phaser.Math.FloatBetween(0.4, 0.8));
+    });
+    life.children.iterate(function(child){
+        child.setBounceY(Phaser.Math.FloatBetween(0.4, 0.8));
+    });
+    key.children.iterate(function(child){
+        child.setBounceY(Phaser.Math.FloatBetween(0.4, 0.8));
+    });
+
+    this.physics.add.collider(key, platforms);
+    this.physics.add.collider(coin, platforms);
+    this.physics.add.collider(life, platforms);
+    cursors = this.input.keyboard.createCursorKeys();
+    this.physics.add.collider(player, platforms);
+    this.physics.add.collider(player, movingPlatform1);
+    this.physics.add.collider(player, movingPlatform2);
+    this.physics.add.collider(enemy, platforms);
+    this.physics.add.collider(enemy1, platforms);
+    this.physics.add.collider(enemy2, platforms);
+    this.physics.add.collider(enemy3, platforms);
+    this.physics.add.collider(enemy4, platforms);
+    this.physics.add.collider(enemy5, platforms);
+    this.physics.add.overlap(player, coin, collectCoin, null, this);
+    this.physics.add.overlap(player, life, collectLife, null, this);
+    this.physics.add.overlap(player, enemy, fall, null, this);
+    this.physics.add.overlap(player, enemy1, fall, null, this);
+    this.physics.add.overlap(player, enemy2, fall, null, this);
+    this.physics.add.overlap(player, enemy3, fall, null, this);
+    this.physics.add.overlap(player, enemy4, fall, null, this);
+    scoreText = this.add.text(16, 16, 'score: 0', { fontSize: '32px', fill: '#000' });
+    scoreText.setScrollFactor(0);
+    
+}
+
+function update (){
+    
+    if (cursors.left.isDown){
+        log = 2;
+        player.setVelocityX(-120);
+        player.anims.play('left', true);
+    }else if (cursors.right.isDown){
+        log = 1;
+        player.setVelocityX(120);
+        player.anims.play('right', true);
+    }else{
+        player.setVelocityX(0);
+        if(log===1)player.anims.play('turn');
+        else player.anims.play('turnL');
+    }
+    if (cursors.up.isDown && player.body.touching.down){
+        player.setVelocityY(-450);
+    }
+    
+    if(movingPlatform1.x >= 480){
+        movingPlatform1.setVelocityX(-50);
+    }else if(movingPlatform1.x <= 260){
+        movingPlatform1.setVelocityX(50);
+    }
+    if(movingPlatform2.x >= 4800){
+        movingPlatform2.setVelocityX(-100);
+    }else if(movingPlatform2.x <= 4000){
+        movingPlatform2.setVelocityX(100);
+    }
+    if(enemy.x >= 500){
+        enemy.setVelocityX(-50);
+        enemy.anims.play('enemyLeft');
+    }else if(enemy.x <= 100){
+        enemy.setVelocityX(50);
+        enemy.anims.play('enemyRight');
+    }
+    if(enemy1.x >= 1120){
+        enemy1.setVelocityX(-50);
+        enemy1.anims.play('enemyLeft');
+    }else if(enemy1.x <= 860){
+        enemy1.setVelocityX(50);
+        enemy1.anims.play('enemyRight');
+    }
+    if(enemy2.x >= 2500){
+        enemy2.setVelocityX(-50);
+        enemy2.anims.play('enemyLeft');
+    }else if(enemy2.x <= 1400){
+        enemy2.setVelocityX(50);
+        enemy2.anims.play('enemyRight');
+    }
+    if(enemy3.x >= 3900){
+        enemy3.setVelocityX(-50);
+        enemy3.anims.play('enemyLeft');
+    }else if(enemy3.x <= 2500){
+        enemy3.setVelocityX(50);
+        enemy3.anims.play('enemyRight');
+    }
+    if(enemy4.x >= 3900){
+        enemy4.setVelocityX(-200);
+        enemy4.anims.play('enemyLeft');
+    }else if(enemy4.x <= 1400){
+        enemy4.setVelocityX(200);
+        enemy4.anims.play('enemyRight');
+    }
+}
+function collectKey(player, key){
+    getitem.play();
+    key.disableBody(true, true);
+}
+function collectCoin(player, coin){
+    getitem.play();
+    getitem.play();
+    coin.disableBody(true, true);
+    score++;
+    scoreText.setText('Score: ' + score);
+    if(score===55)this.physics.add.overlap(player, key, collectKey, null, this);
+
+}
+function collectLife(player, life){
+    getitem.play();
+    life.disableBody(true, true);
+  
+    //player.disableBody(false, true);
+    //getLife = true;
+}
+function fall(player, ramps){
+    
+}
+</script>
+</body>
+</html>

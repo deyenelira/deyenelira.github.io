@@ -96,19 +96,20 @@ figure.foto-legenda:hover figcaption {
 /*formatacao do menu */
 
 nav#menu ul {
+    align-content: center;
     display: block;
 }
 
 nav#menu ul {
     list-style: none;
     position: absolute;
-    top: -20px;
-    left: 40%;
+    top: -10px;
+    margin:auto;
 }
 
 nav#menu li {
     display: inline-block;
-    background-color: rgb(255, 255, 22);
+    background-color:rgb(228, 100, 203);
     padding: 10px;
     margin: 2px;
     transition: background-color 1s;
